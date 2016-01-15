@@ -1,0 +1,5 @@
+class RedianSecurityContext
+
+  attr_accessor :context, :permission
+  
+end
