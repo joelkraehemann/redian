@@ -1,4 +1,4 @@
-class RedianAccount
+class Redian::Account
 
   @@salt = nil
   

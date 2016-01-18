@@ -1,26 +1,39 @@
+$LOAD_PATH << '..'
+$LOAD_PATH << '.'
+
+require "redian"
+require "redian_shell_session"
+
 require "xmlrpc/server"
 require "logger"
 
-class RedianServer < XMLRPC::Server
+class Redian::Server < XMLRPC::Server
 
+  include Redian
+  
   REDIAN_LOGGER_FILENAME = "/dev/stdout"
   
   REDIAN_BUILD_HOST = "127.0.0.1"
   REDIAN_BUILD_PORT = 10000
+
+  REDIAN_SERVER_SCRIPT = "redian_console.rb"
   
   @@logger = Logger.new(REDIAN_LOGGER_FILENAME)
   
-  attr_accessor :account, :session
+  attr_accessor :account, :session,
+                :shell_session
   
   # default constructor
-  def initialize(host, port)
+  def initialize(port, host)
 
-    super(host, port)
+    super(port, host)
 
     @@logger.info("creating new server instance on #{host}:#{port}")
     
     @account = Array.new
     @session = Array.new
+
+    @shell_session = Redian::ShellSession.new(Redian::ShellSession::REDIAN_SHELL_SESSION_DEFAULT_TITLE)
     
     # redian login handler
     add_handler("redian.login") do |username, password|
@@ -92,12 +105,21 @@ class RedianServer < XMLRPC::Server
       
     end
 
+    # redian list profile handler
+    add_handler("redian.profile.list") do |username, token, account_uuid|
+
+      list_profile(username, token, account_uuid)
+      
+    end
+
   end
 
+  public
+  
   # with defaults constructor
-  def with_defaults
+  def self.with_defaults
     
-    new(REDIAN_BUILD_HOST, REDIAN_BUILD_PORT)
+    new(REDIAN_BUILD_PORT, REDIAN_BUILD_HOST)
     
   end
 
@@ -135,7 +157,7 @@ class RedianServer < XMLRPC::Server
       # find username
       if current.username == username
 
-        current.security_context.each |current_context| do
+        current.security_context.each do |current_context|
 
           # find context
           if current_context.context == context
@@ -162,7 +184,7 @@ class RedianServer < XMLRPC::Server
     # raise exception if no access rights
     if !access_granted
 
-      raise ArgumentError.new("access denied")
+      raise ArgumentError.new("access denied - #{username} at #{context}")
       
     end
 
@@ -256,7 +278,7 @@ class RedianServer < XMLRPC::Server
     
   rescue => err
 
-    @@logger.warn("Exception occured during redian.add_account: #{err}")
+    @@logger.warn("Exception occured during redian.account.add: #{err}")
     
     false
     
@@ -277,7 +299,7 @@ class RedianServer < XMLRPC::Server
     
   rescue => err
 
-    @@logger.warn("Exception occured during redian.add_account: #{err}")
+    @@logger.warn("Exception occured during redian.account.remove: #{err}")
     
     false
     
@@ -298,7 +320,7 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.set_account_attribute: #{err}")
+    @@logger.warn("Exception occured during redian.account.set_attribute: #{err}")
     
     false
       
@@ -319,9 +341,9 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.get_account_attribute: #{err}")
+    @@logger.warn("Exception occured during redian.account.get_attribute: #{err}")
     
-    false
+    nil
       
   end
 
@@ -340,9 +362,9 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.list_account: #{err}")
+    @@logger.warn("Exception occured during redian.account.list: #{err}")
     
-    false
+    nil
       
   end
 
@@ -361,7 +383,7 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.set_profile_attribute: #{err}")
+    @@logger.warn("Exception occured during redian.profile.set_attribute: #{err}")
     
     false
       
@@ -382,9 +404,9 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.get_profile_attribute: #{err}")
+    @@logger.warn("Exception occured during redian.profile.get_attribute: #{err}")
     
-    false
+    nil
       
   end
 
@@ -403,9 +425,9 @@ class RedianServer < XMLRPC::Server
 
   rescue => err
 
-    @@logger.warn("Exception occured during redian.list_profile: #{err}")
+    @@logger.warn("Exception occured during redian.profile.list: #{err}")
     
-    false
+    nil
       
   end
 
