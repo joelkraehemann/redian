@@ -22,6 +22,10 @@ class Redian::Server < XMLRPC::Server
   
   attr_accessor :account, :session,
                 :shell_session
+
+  class << self
+    @@logger.progname = "redian-server";
+  end
   
   # default constructor
   def initialize(port, host)
@@ -114,8 +118,6 @@ class Redian::Server < XMLRPC::Server
 
   end
 
-  public
-  
   # with defaults constructor
   def self.with_defaults
     
