@@ -1,0 +1,4 @@
+class Redian::Server::XssFilter
+
+  DEFAULT_ALLOWED_PATTERN = ""
+end

@@ -24,7 +24,9 @@ class Redian::Server < XMLRPC::Server
                 :shell_session
 
   class << self
+
     @@logger.progname = "redian-server";
+
   end
   
   # default constructor
