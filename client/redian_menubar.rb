@@ -7,6 +7,8 @@ require "redian_client"
 
 require "gtk2"
 
+require "redian_connection_dialog"
+
 class Redian::Client::MenuBar < Gtk::MenuBar
 
   attr_accessor :file_menu, :help_menu
@@ -22,11 +24,39 @@ class Redian::Client::MenuBar < Gtk::MenuBar
     @file_menu = Gtk::Menu.new
     item.submenu = @file_menu
 
+    # open connection
+    item = Gtk::MenuItem.new("Open connection")
+    @file_menu.add(item)
+
+    item.signal_connect("activate") do
+
+      open_connection = Redian::Client::ConnectionDialog.new
+      
+      open_connection.signal_connect("response") do |response_id|
+
+        if response_id == Gtk::Dialog::RESPONSE_OK
+
+          
+          
+        end
+
+        open_connection.destroy
+        
+      end
+
+      open_connection.show_all
+      open_connection.run
+              
+    end
+    
+    # quit
     item = Gtk::MenuItem.new("Quit")
     @file_menu.add(item)
 
     item.signal_connect("activate") do
+      
       Gtk.main_quit
+      
     end
 
     # help menu
@@ -36,6 +66,7 @@ class Redian::Client::MenuBar < Gtk::MenuBar
     @help_menu = Gtk::Menu.new
     item.submenu = @help_menu
 
+    # about
     item = Gtk::MenuItem.new("About")
     @help_menu.add(item)
 
