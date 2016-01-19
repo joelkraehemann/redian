@@ -202,6 +202,7 @@ class Redian::Server < XMLRPC::Server
     password = nil
     
     token = nil
+    success = false
 
     @account.each do |current|
 
@@ -210,6 +211,7 @@ class Redian::Server < XMLRPC::Server
 
         # generate token
         token = SecureRandom.uuid
+        success = true
 
         # new session
         new_session = RedianSession.new(token)
@@ -225,7 +227,7 @@ class Redian::Server < XMLRPC::Server
     end
       
     # return token or nil on failed login
-    token
+    { "success" => success, "token" => token }
     
   end
 
@@ -262,7 +264,7 @@ class Redian::Server < XMLRPC::Server
     end
 
     # return true if session found with token
-    success
+    { "success" => success }
   end
 
   # add account
@@ -276,13 +278,13 @@ class Redian::Server < XMLRPC::Server
 
     # TODO:JK: implement me
 
-    success
+    { "success" => success }
     
   rescue => err
 
     @@logger.warn("Exception occured during redian.account.add: #{err}")
     
-    false
+    { "success" => false }
     
   end
 
@@ -297,13 +299,13 @@ class Redian::Server < XMLRPC::Server
 
     # TODO:JK: implement me
 
-    success
+    { "success" => success }
     
   rescue => err
 
     @@logger.warn("Exception occured during redian.account.remove: #{err}")
     
-    false
+    { "success" => false }
     
   end
 
@@ -317,15 +319,15 @@ class Redian::Server < XMLRPC::Server
     authenticate(username, token, security_context, access_permission)
     
     # TODO:JK: implement me
-    
-    success
+
+    { "success" => success }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.account.set_attribute: #{err}")
     
-    false
-      
+    { "success" => false }
+    
   end
 
   # get account attribute
@@ -339,13 +341,13 @@ class Redian::Server < XMLRPC::Server
 
     # TODO:JK: implement me
     
-    value
+    { "success" => success, "#{account_attribute}" => value }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.account.get_attribute: #{err}")
     
-    nil
+    { "success" => false, "#{account_attribute}" => nil }
       
   end
 
@@ -354,19 +356,21 @@ class Redian::Server < XMLRPC::Server
 
     security_context = 'redian.account'
     access_permission = 'r'
-    value = nil
+    
+    account_detail = Hash.new
+    success = false
     
     authenticate(username, token, security_context, access_permission)
 
     # TODO:JK: implement me
     
-    value
+    { "success" => success, "account-detail" => account_detail }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.account.list: #{err}")
-    
-    nil
+
+    { "success" => false, "account-detail" => nil }
       
   end
 
@@ -381,13 +385,13 @@ class Redian::Server < XMLRPC::Server
     
     # TODO:JK: implement me
     
-    success
+    { "success" => success }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.profile.set_attribute: #{err}")
     
-    false
+    { "success" => false }
       
   end
 
@@ -396,19 +400,21 @@ class Redian::Server < XMLRPC::Server
 
     security_context = 'redian.profile'
     access_permission = 'r'
+
     value = nil
+    success = false
     
     authenticate(username, token, security_context, access_permission)
 
     # TODO:JK: implement me
     
-    value
+    { "success" => success, "#{account_attribute}" => value }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.profile.get_attribute: #{err}")
     
-    nil
+    { "success" => false, "account-attribute" => nil }
       
   end
 
@@ -417,19 +423,21 @@ class Redian::Server < XMLRPC::Server
 
     security_context = 'redian.profile'
     access_permission = 'r'
-    value = nil
+
+    profile_detail = nil
+    success = false
     
     authenticate(username, token, security_context, access_permission)
 
     # TODO:JK: implement me
     
-    value
+    { "success" => success, "profile-detail" => profile_detail }
 
   rescue => err
 
     @@logger.warn("Exception occured during redian.profile.list: #{err}")
     
-    nil
+    { "success" => false, "profile-detail" => nil }
       
   end
 

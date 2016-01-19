@@ -13,12 +13,15 @@ class Redian::Client::Window < Gtk::Window
 
   REDIAN_CLIENT_WINDOW_DEFAULT_TITLE = "Redian Client"
 
-  attr_accessor :menu_bar, :terminal
+  attr_accessor :menu_bar, :terminal,
+                :client
   
   def initialize(title)
 
     super(title)
 
+    @client = Redian::Client.with_defaults
+    
     vbox = Gtk::VBox.new
     add(vbox)
 
