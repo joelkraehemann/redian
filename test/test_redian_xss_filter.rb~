@@ -1,0 +1,5 @@
+
+require "../redian"
+require "../redian/server/redian_xss_filter"
+require "test/unit"
+

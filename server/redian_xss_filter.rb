@@ -8,11 +8,11 @@ class Redian::Server::XssFilter
   LOGGER_FILENAME = "/dev/stdout"
   
   DEFAULT_ALLOWED_PATTERN = /^[a-xA-X][a-xA-X\-]*/
-  DEFAULT_ALLOWED_STRING_PATTERN = /^(?!(\#\{)(.*)(\}))/
+  DEFAULT_ALLOWED_STRING_PATTERN = /(?!(\#\{)(.*)(\}))/
   
   @@logger = Logger.new(LOGGER_FILENAME)
 
-  attr_reader :allowed_pattern
+  attr_reader :allowed_pattern, :allowed_string_pattern
 
   class << self
 
@@ -21,16 +21,17 @@ class Redian::Server::XssFilter
   end
 
   # default constructor
-  def initialize(allowed_pattern)
+  def initialize(allowed_pattern, allowed_string_pattern)
 
     @allowed_pattern = allowed_pattern
+    @allowed_string_pattern = allowed_string_pattern
     
   end
 
   # constructor with defaults
   def self.with_defaults
 
-    new(DEFAULT_ALLOWED_PATTERN)
+    new(DEFAULT_ALLOWED_PATTERN, DEFAULT_ALLOWED_STRING_PATTERN)
     
   end
 
@@ -77,7 +78,7 @@ class Redian::Server::XssFilter
         when String
 
           # check string for XSS
-          success = DEFAULT_ALLOWED_STRING_PATTERN.match(current)
+          success = @allowed_string_pattern.match(current)
 
           if success == false
 
@@ -88,7 +89,7 @@ class Redian::Server::XssFilter
         when Symbol
 
           # check symbol for XSS
-          success = DEFAULT_ALLOWED_PATTERN.match(current.id2name)
+          success = @allowed_pattern.match(current.id2name)
 
           if success == false
 

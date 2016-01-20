@@ -1,8 +1,8 @@
 $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
-require "redian"
-require "redian_shell_session"
+require_relative "../redian"
+require_relative "redian_shell_session"
 
 require "xmlrpc/server"
 require "logger"
