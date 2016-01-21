@@ -1,15 +1,15 @@
 $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
-require "redian"
-require "redian_client"
+require_relative "../redian"
 
 require "gtk2"
 require "vte"
 
-require "redian_menubar"
+require_relative "redian_client"
+require_relative "redian_menubar"
 
-class Redian::Client::Window < Gtk::Window
+class Redian::Window < Gtk::Window
 
   REDIAN_CLIENT_WINDOW_DEFAULT_TITLE = "Redian Client"
 

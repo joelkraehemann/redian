@@ -1,10 +1,12 @@
 $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
-require "redian"
+require_relative "../redian"
 
-class Redian::Server::XssFilter
+require 'logger'
 
+class Redian::XssFilter < Object
+  
   LOGGER_FILENAME = "/dev/stdout"
   
   DEFAULT_ALLOWED_PATTERN = /^[a-xA-X][a-xA-X\-]*/
@@ -16,7 +18,7 @@ class Redian::Server::XssFilter
 
   class << self
 
-    @@logger.progname = "redian-server";
+    @@logger.progname = "redian-server"
 
   end
 

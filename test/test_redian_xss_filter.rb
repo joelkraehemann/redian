@@ -10,7 +10,7 @@ require "test/unit"
 
 class TestRedianXssFilter < Test::Unit::TestCase
 
-  TEST_REDIAN_XSS_FILTER_NOT_ALLOWED = ["#{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN}", "#{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN}", "some prefix #{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN}", "#{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN} some suffix"]
+  TEST_REDIAN_XSS_FILTER_NOT_ALLOWED = ["#{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN}", "some prefix #{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN}", "#{Redian::Server::XssFilter::DEFAULT_ALLOWED_PATTERN} some suffix"]
   
   @xss_filter = nil
   

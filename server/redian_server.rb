@@ -1,31 +1,33 @@
 $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
-require_relative "../redian"
-require_relative "redian_shell_session"
+require_relative '../redian'
+require_relative 'redian_shell_session'
+require_relative 'redian_xss_filter'
 
-require "xmlrpc/server"
-require "logger"
+require 'xmlrpc/server'
+require 'logger'
 
 class Redian::Server < XMLRPC::Server
 
   include Redian
   
-  REDIAN_LOGGER_FILENAME = "/dev/stdout"
+  LOGGER_FILENAME = "/dev/stdout"
   
-  REDIAN_BUILD_HOST = "127.0.0.1"
-  REDIAN_BUILD_PORT = 10000
+  BUILD_HOST = "127.0.0.1"
+  BUILD_PORT = 10000
 
-  REDIAN_SERVER_SCRIPT = "redian_console.rb"
+  SERVER_SCRIPT = "redian_console.rb"
   
-  @@logger = Logger.new(REDIAN_LOGGER_FILENAME)
+  @@logger = Logger.new(LOGGER_FILENAME)
   
   attr_accessor :account, :session,
-                :shell_session
+                :shell_session,
+                :xss_filter
 
   class << self
 
-    @@logger.progname = "redian-server";
+    @@logger.progname = "redian-server"
 
   end
   
@@ -39,7 +41,9 @@ class Redian::Server < XMLRPC::Server
     @account = Array.new
     @session = Array.new
 
-    @shell_session = Redian::ShellSession.new(Redian::ShellSession::REDIAN_SHELL_SESSION_DEFAULT_TITLE)
+    @shell_session = Redian::ShellSession.with_defaults
+
+    @xss_fitler = Redian::Server::XssFilter.with_defaults
     
     # redian login handler
     add_handler("redian.login") do |username, password|
@@ -123,7 +127,7 @@ class Redian::Server < XMLRPC::Server
   # with defaults constructor
   def self.with_defaults
     
-    new(REDIAN_BUILD_PORT, REDIAN_BUILD_HOST)
+    new(BUILD_PORT, BUILD_HOST)
     
   end
 
@@ -200,6 +204,8 @@ class Redian::Server < XMLRPC::Server
   # perform login to server
   def login(username, password)
 
+    @xss_filter.check(username, password)
+
     cpassword = password.crypt(RadianAccount.salt)
     password = nil
     
@@ -230,12 +236,20 @@ class Redian::Server < XMLRPC::Server
       
     # return token or nil on failed login
     { "success" => success, "token" => token }
+
+  rescue => err
+
+    @@logger.warn("Exception occured during redian.login: #{err}")
+    
+    { "success" => false }
     
   end
 
   # do logout of server
   def logout(token)
 
+    @xss_filter.check(token)
+    
     success = false
 
     # iterate to find session with token
@@ -267,6 +281,13 @@ class Redian::Server < XMLRPC::Server
 
     # return true if session found with token
     { "success" => success }
+
+  rescue => err
+
+    @@logger.warn("Exception occured during redian.logout: #{err}")
+    
+    { "success" => false }
+    
   end
 
   # add account
