@@ -20,9 +20,9 @@
 $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
-require "redian"
+require_relative '../redian'
 
-require "xmlrpc/client"
+require 'xmlrpc/client'
 
 class Redian::Client < XMLRPC::Client
 

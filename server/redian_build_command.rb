@@ -1,4 +1,5 @@
 # coding: utf-8
+
 # Redian-Client - Remote PTY Session for Redian-Server written in Ruby
 # Copyright (C) 2016 Joël Krähemann
 #
@@ -17,17 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Redian-Client.  If not, see <http://www.gnu.org/licenses/>.
 
-#!/usr/bin/ruby
-
+$LOAD_PATH << '..'
 $LOAD_PATH << '.'
-$LOAD_PATH << 'client'
 
-require_relative "redian"
-require_relative "client/redian_window"
+require_relative '../redian'
 
-Gtk.init
+module Redian::BuildCommand
 
-window = Redian::Window.with_defaults
-window.show_all
-
-Gtk.main
+  :SHOW_BUILD_COMMAND
+  :QUIT
+  :WARRANTY
+  :COPYLEFT
+  :NEW_PACKAGE
+  :PTY_SESSION
+  :BUILD_PACKAGE
+  :BROWS_BUILDS
+  :EDIT_BUILD
+  
+end
