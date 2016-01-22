@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # coding: utf-8
 
-# Redian-Client - Remote PTY Session for Redian-Server written in Ruby
+# Redian-Build-Server - Interactive build server written in Ruby
 # Copyright (C) 2016 Joël Krähemann
 #
 # This file is part of redian-client.
@@ -20,14 +20,10 @@
 # along with Redian-Client.  If not, see <http://www.gnu.org/licenses/>.
 
 $LOAD_PATH << '.'
-$LOAD_PATH << 'client'
+$LOAD_PATH << 'server'
 
 require_relative 'redian'
-require_relative 'client/redian_window'
+require_relative 'server/redian_build_server'
 
-Gtk.init
-
-window = Redian::Window.with_defaults
-window.show_all
-
-Gtk.main
+build_server = Redian::BuildServer.new
+build_server.run

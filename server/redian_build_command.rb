@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Redian-Client - Remote PTY Session for Redian-Server written in Ruby
+# Redian-Build-Server - Interactive build server written in Ruby
 # Copyright (C) 2016 Joël Krähemann
 #
 # This file is part of redian-client.
@@ -30,9 +30,9 @@ module Redian::BuildCommand
   :WARRANTY
   :COPYLEFT
   :NEW_PACKAGE
+  :EDIT_BUILD
   :PTY_SESSION
   :BUILD_PACKAGE
   :BROWS_BUILDS
-  :EDIT_BUILD
   
 end

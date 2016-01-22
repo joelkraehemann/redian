@@ -7,22 +7,38 @@ class Redian::Account
                 :email, :uuid,
                 :security_context, :session
 
-  def initialize
+  class << self
 
-    @username = nil
-    @password = nil
+    @@salt = Redian::Account.generate_salt
     
-    @firstname = nil
-    @surname = nil
-    @email = nil
+  end
+  
+  def initialize(username = nil, password = nil, firstname = nil, surname = nil, email = nil, uuid)
+
+    @username = username
+    @password = password
+    
+    @firstname = firstname
+    @surname = surname
+    @email = email
+
+    @uuid = uuid
     
     @security_context = Array.new
     @session = Hash.new
   end
 
-  def RedianAccount.setup_salt
+  def self.with_defaults
+
+    new(:uuid => SecureRandom.uuid)
+    
+  end
+
+  def Redian::Account.generate_salt
 
     # TODO:JK: implement salt setup
+
+    nil
     
   end
   

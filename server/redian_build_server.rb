@@ -1,7 +1,6 @@
-#!/usr/bin/ruby
 # coding: utf-8
 
-# Redian-Client - Remote PTY Session for Redian-Server written in Ruby
+# Redian-Build-Server - Interactive build server written in Ruby
 # Copyright (C) 2016 Joël Krähemann
 #
 # This file is part of redian-client.
@@ -35,15 +34,17 @@ class Redian::BuildServer < Object
   DEFAULT_WARRANTY = "#{Dir.pwd}/gpl-preamble.txt"
   DEFAULT_COPYLEFT = "#{Dir.pwd}/gpl.txt"
   
-  attr_accessor :show_menu,
-                :build_cycle
+  attr_accessor :build_cycle, :show_menu,
+                :build_package
+                
 
   def initialize(show_menu = true)
 
     @show_menu = show_menu
     
     @build_cycle = :SHOW_BUILD_COMMAND
-    
+
+    @build_package = nil
   end
 
   def do_show_menu
@@ -115,9 +116,16 @@ class Redian::BuildServer < Object
       end
       
     when :NEW_PACKAGE
+
       
       # TODO:JK: implement me
       @build_cycle = :SHOW_BUILD_COMMAND
+
+    when :EDIT_BUILD
+
+      # TODO:JK: implement me
+      @build_cycle = :SHOW_BUILD_COMMAND
+      
       
     when :PTY_SESSION
 
@@ -125,11 +133,6 @@ class Redian::BuildServer < Object
       @build_cycle = :SHOW_BUILD_COMMAND
       
     when :BUILD_PACKAGE
-
-      # TODO:JK: implement me
-      @build_cycle = :SHOW_BUILD_COMMAND
-      
-    when :EDIT_BUILD
 
       # TODO:JK: implement me
       @build_cycle = :SHOW_BUILD_COMMAND
@@ -179,6 +182,3 @@ class Redian::BuildServer < Object
   end
   
 end
-
-build_server = Redian::BuildServer.new
-build_server.run
