@@ -3,8 +3,8 @@ $LOAD_PATH << '.'
 
 require_relative '../redian'
 
-module
-
+module Redian::BuildLicence
+  
   :REDIAN_BUILD_MIT_LICENCE
   :REDIAN_BUILD_LGPL_LICENCE
   :REDIAN_BUILD_GFDL_LICENCE

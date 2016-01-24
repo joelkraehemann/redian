@@ -27,7 +27,9 @@ require_relative 'redian_build_licence'
 require 'libxml'
 require 'logger'
 
-class Redian::BuildPackage < XML::Document
+class Redian::BuildPackage < LibXML::XML::Document
+
+  include Redian::BuildLicence
 
   LOGGER_FILENAME = "/dev/stdout"
 
@@ -37,9 +39,10 @@ class Redian::BuildPackage < XML::Document
 
   @@manager
   
-  attr_accessor :package_name, :package_version,
+  attr_accessor :uuid,
+                :package_name, :package_version,
                 :package_revision, :program_title,
-                :program_description, :uuid,
+                :program_description, 
                 :runtime_dependency, :build_dependency,
                 :filename, :licence,
                 :installed_documentation, :installed_file,
@@ -51,7 +54,7 @@ class Redian::BuildPackage < XML::Document
     
   end
   
-  def initialize(package_name = nil, package_version = nil, package_revision = 1, program_title = nil, program_description = nil, uuid, runtime_dependency = nil, build_dependency = nil, licence = nil)
+  def initialize(uuid, package_name = nil, package_version = nil, package_revision = 1, program_title = nil, program_description = nil, runtime_dependency = nil, build_dependency = nil, licence = nil)
 
     @package_name = package_name
     @package_version = package_version
@@ -73,16 +76,44 @@ class Redian::BuildPackage < XML::Document
 
     @xml_doc = nil
     @binary_tarball = nil
+
+    @@manager.push(self)
     
   end
 
-  def self.with_defaults()
+  def self.with_defaults
 
-    new(:uuid => SecureRandom.uuid)
+    new(SecureRandom.uuid)
     
   end
 
-  def Redian::BuildPackage.parse_file(filename)
+  # find a package by matching attribute value
+  def self.find(attribute, str)
+
+    retval = nil
+    
+    @@manager.each do |current|
+
+      if current.send(attribute) == str
+
+        if retval == nil
+
+          retval = Array.new
+          
+        end
+
+        retval.push(current)
+        
+      end
+      
+    end
+
+    retval
+    
+  end
+
+  # parse XML file containing package information
+  def self.parse_file(filename)
 
     doc = XML::Document.file(filename)
     retval = nil
@@ -99,112 +130,113 @@ class Redian::BuildPackage < XML::Document
         doc.root.each_element do |current_node|
 
           if current_node.type == ELEMENT_NODE
-             
-             case current_node.name
-             when "package-name"
+            
+            case current_node.name
+            when "package-name"
 
-               # package name
-               retval.package_name = current_node.content.strip
-               
-             when "package-version"
+              # package name
+              retval.package_name = current_node.content.strip
+              
+            when "package-version"
 
-               # package version
-               retval.package_version = current_node.content.strip
-               
-             when "package-revision"
+              # package version
+              retval.package_version = current_node.content.strip
+              
+            when "package-revision"
 
-               # package revision
-               retval.package_revision = current_node.content.strip
-               
-             when "program-title"
+              # package revision
+              retval.package_revision = current_node.content.strip
+              
+            when "program-title"
 
-               # program title
-               retval.program_title = current_node.content.strip
-               
-             when "program-description"
+              # program title
+              retval.program_title = current_node.content.strip
+              
+            when "program-description"
 
-               # program description
-               retval.program_description = current_node.content.strip
-               
-             when "runtime-dependency"
+              # program description
+              retval.program_description = current_node.content.strip
+              
+            when "runtime-dependency"
 
-               # runtime dependency
-               current_node.each_element do |filename_node|
+              # runtime dependency
+              current_node.each_element do |filename_node|
 
-                 # push uri-ref if available
-                 if(filename_node.type == ELEMENT_NODE &&
-                    filename_node.name == "filename")
+                # push uri-ref if available
+                if(filename_node.type == ELEMENT_NODE &&
+                   filename_node.name == "filename")
 
-                   retval.runtime_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
+                  retval.runtime_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
 
-                 end
-                 
-               end
-               
-             when "build-dependency"
-               
-               # build dependency
-               current_node.each_element do |filename_node|
+                end
+                
+              end
+              
+            when "build-dependency"
+              
+              # build dependency
+              current_node.each_element do |filename_node|
 
-                 # push uri-ref if available
-                 if(filename_node.type == ELEMENT_NODE &&
-                    filename_node.name == "filename")
-                   
-                   retval.build_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
+                # push uri-ref if available
+                if(filename_node.type == ELEMENT_NODE &&
+                   filename_node.name == "filename")
+                  
+                  retval.build_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
 
-                 end
-                 
-               end
+                end
+                
+              end
 
-             when "filename"
-               
-               retval.filename = current_node.content.strip
-               
-             when "licence"
-               
-               # licenses
-               current_node.each_element do |licence_node|
-                 
-                 licence_node.each_element do |copyleft_node|
+            when "filename"
+              
+              retval.filename = current_node.content.strip
+              
+            when "licence"
+              
+              # licenses
+              current_node.each_element do |licence_node|
+                
+                licence_node.each_element do |copyleft_node|
 
-                   # check for know licence
-                   if copyleft_node.type == ELEMENT_NODE
+                  # check for know licence
+                  if copyleft_node.type == ELEMENT_NODE
 
-                     case copyleft_node.name
-                     when "mit"
+                    case copyleft_node.name
+                    when "mit"
 
-                       # MIT licence
-                       retval.licence.push([:REDIAN_BUILD_MIT_LICENCE, copyleft_node.attributes.getAttribute("version")])
-                       
-                     when "lgpl"
+                      # MIT licence
+                      retval.licence.push([:REDIAN_BUILD_MIT_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      
+                    when "lgpl"
 
-                       # LGPL licence
-                       retval.licence.push([:REDIAN_BUILD_LGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
-                       
-                     when "gfdl"
+                      # LGPL licence
+                      retval.licence.push([:REDIAN_BUILD_LGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      
+                    when "gfdl"
 
-                       # GFDL licence
-                       retval.licence.push([:REDIAN_BUILD_GFDL_LICENCE, copyleft_node.attributes.getAttribute("version")])
-                       
-                     when "gpl"
-                       
-                       # GPL licence
-                       retval.licence.push([:REDIAN_BUILD_GPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
-                       
-                     when "agpl"
+                      # GFDL licence
+                      retval.licence.push([:REDIAN_BUILD_GFDL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      
+                    when "gpl"
+                      
+                      # GPL licence
+                      retval.licence.push([:REDIAN_BUILD_GPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      
+                    when "agpl"
 
-                       # AGPL licence
-                       retval.licence.push([:REDIAN_BUILD_AGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
-                       
-                     else
-                       
-                       @@logger.warn("unknown copyleft licence #{copyleft_node.name}")
-                       
-                   end
-                   
-                 end
-                 
-               end               
+                      # AGPL licence
+                      retval.licence.push([:REDIAN_BUILD_AGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      
+                    else
+                      
+                      @@logger.warn("unknown copyleft licence #{copyleft_node.name}")
+                      
+                    end
+                    
+                  end
+                  
+                end
+              end
              when "installed-documentation"
 
                # installed documentation
@@ -267,8 +299,9 @@ class Redian::BuildPackage < XML::Document
     retval
     
   end
-  
-  def Redian::BuildPackage.load_directory(dirname = DEFAULT_BUILD_PACKAGE_DIRECTORY)
+
+  # load directory and parse all package related XML files
+  def self.load_directory(dirname = DEFAULT_BUILD_PACKAGE_DIRECTORY)
 
     d = Dir.new(dirname)
 
@@ -276,7 +309,7 @@ class Redian::BuildPackage < XML::Document
     d.each do |filename|
 
       # check if .xml suffix
-      if filename.suffix(".xml") == true
+      if filename.end_with?(".xml") == true
 
         # push to manager array
         @@manager.push(Redian::BuildPackage.parse_file(filename))

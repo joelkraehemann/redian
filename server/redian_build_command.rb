@@ -29,6 +29,7 @@ module Redian::BuildCommand
   :QUIT
   :WARRANTY
   :COPYLEFT
+  :OPEN_PACKAGE
   :NEW_PACKAGE
   :EDIT_BUILD
   :PTY_SESSION

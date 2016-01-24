@@ -1,5 +1,10 @@
 # redian
-build-server and remote client written in Ruby
+build-server, remote-client and interactive builder application written in Ruby
+
+## Licence
+
+* GPLv3+
+* AGPLv3+
 
 ## Dependencies
 

@@ -22,9 +22,11 @@ $LOAD_PATH << '..'
 $LOAD_PATH << '.'
 
 require_relative '../redian'
+require_relative 'redian_build_package'
 require_relative 'redian_build_command'
 
 require 'tty-prompt'
+require 'securerandom'
 
 class Redian::BuildServer < Object
 
@@ -45,6 +47,8 @@ class Redian::BuildServer < Object
     @build_cycle = :SHOW_BUILD_COMMAND
 
     @build_package = nil
+    Redian::BuildPackage.load_directory
+    
   end
 
   def do_show_menu
@@ -61,6 +65,7 @@ class Redian::BuildServer < Object
         menu.choice 'Quit', :QUIT
         menu.choice 'show warranty', :WARRANTY
         menu.choice 'show copyleft', :COPYLEFT
+        menu.choice 'open existing package', :OPEN_PACKAGE
         menu.choice 'start new package', :NEW_PACKAGE
         menu.choice 'do PTY session', :PTY_SESSION
         menu.choice 'build package', :BUILD_PACKAGE
@@ -114,9 +119,96 @@ class Redian::BuildServer < Object
         @build_cycle = :SHOW_BUILD_COMMAND
         
       end
+
+    when :OPEN_PACKAGE
+
+      attribute = nil
+      str = nil
+
+      package_arr = nil
+      package = nil
+      
+      success = false
+
+      # ask attribute
+      prompt = TTY::Prompt.new
+
+      attribute = prompt.select("What attribute do you like to lookup?") do |menu|
+        
+        menu.choice 'uuid', :uuid
+        menu.choice 'package name', :package_name
+        menu.choice 'package version', :package_version
+        menu.choice 'program title', :package_title
+        menu.choice 'program description', :program_description
+        
+      end
+
+      # ask attribute
+      prompt = TTY::Prompt.new
+
+      str = prompt.ask("Enter the search term? ")
+      str.chomp!
+      
+      # retrieve suiting packages as array
+      package_arr = Redian::BuildPackage.find(attribute, str)
+
+      if package_arr != nil
+        # ask value
+        prompt = TTY::Prompt.new
+
+        package = prompt.select("Select of matching packages?") do |menu|
+          
+          package_arr.each do |current|
+
+            tmp = sprintf("%s-%d\t%s\t\t\t\t\t%s", current.package_version, current.package_revision, current.package_name, current.uuid)
+            menu.choice tmp, current.uuid
+            
+          end
+          
+        end
+        
+      end
+      
+      if package != nil
+
+        @build_package = package
+        success = true
+        
+      end
+      
+      if success == true
+
+        @build_cycle = :EDIT_BUILD
+
+      else
+        
+        @build_cycle = :SHOW_BUILD_COMMAND
+
+      end
       
     when :NEW_PACKAGE
 
+      package_name = nil
+      package_version = nil
+      
+      # ask package name
+      prompt = TTY::Prompt.new
+
+      package_name = prompt.ask("New package name?")
+      package_name.chomp!
+      
+      # ask package version
+      prompt = TTY::Prompt.new
+
+      package_version = prompt.ask("New package version?")
+      package_version.chomp!
+      
+      if (package_name != nil &&
+          package_version != nil)
+
+        @build_package = Redian::BuildPackage.new(SecureRandom.uuid(), package_name, package_version)
+        
+      end
       
       # TODO:JK: implement me
       @build_cycle = :SHOW_BUILD_COMMAND
