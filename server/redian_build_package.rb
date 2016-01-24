@@ -29,6 +29,7 @@ require 'logger'
 
 class Redian::BuildPackage < LibXML::XML::Document
 
+  include LibXML
   include Redian::BuildLicence
 
   LOGGER_FILENAME = "/dev/stdout"
@@ -46,7 +47,7 @@ class Redian::BuildPackage < LibXML::XML::Document
                 :runtime_dependency, :build_dependency,
                 :filename, :licence,
                 :installed_documentation, :installed_file,
-                :xml_doc, :binary_tarball
+                :binary_tarball
 
   class << self
 
@@ -56,27 +57,35 @@ class Redian::BuildPackage < LibXML::XML::Document
   
   def initialize(uuid, package_name = nil, package_version = nil, package_revision = 1, program_title = nil, program_description = nil, runtime_dependency = nil, build_dependency = nil, licence = nil)
 
-    @package_name = package_name
-    @package_version = package_version
-    @package_revision = package_revision
+    super()
 
-    @program_title = program_title
-    @program_description = program_description
+    self.root = XML::Node.new('package')
+    self.root['version'] = "1.0"
+
+    self.package_name = package_name
+    self.package_version = package_version
+    self.package_revision = package_revision
+
+    self.program_title = program_title
+    self.program_description = program_description
     
-    @uuid = uuid
+    self.uuid = uuid
 
-    @runtime_dependency = runtime_dependency
-    @build_dependency = build_dependency
+    self.runtime_dependency = runtime_dependency
+    self.build_dependency = build_dependency
 
-    @filename = "#{@package_name}-#{package_version}-#{package_revision}.xml"
-    @licence = licence
+    self.filename = "#{DEFAULT_BUILD_PACKAGE_DIRECTORY}/#{@package_name}-#{@package_version}-#{@package_revision}.xml"
+    self.licence = licence
     
-    @installed_documentation = Array.new
-    @installed_files = Array.new
+    self.installed_documentation = Array.new
+    self.installed_file = Array.new
 
-    @xml_doc = nil
-    @binary_tarball = nil
+    self.binary_tarball = nil
 
+    # save XML
+    save(@filename, :indent => true, :encoding => LibXML::XML::Encoding::UTF_8)
+
+    # add to manager
     @@manager.push(self)
     
   end
@@ -87,6 +96,279 @@ class Redian::BuildPackage < LibXML::XML::Document
     
   end
 
+  def package_name=(value)
+
+    @package_name = value
+    
+    node = XML::Node.new('package-name')
+    node.content = value
+    self.root << node
+    
+  end
+
+  def package_version=(value)
+
+    @package_version = value
+    
+    if value != nil
+
+      node = XML::Node.new('package-version')
+      node.content = value
+      self.root << node
+
+    end
+        
+  end
+
+  def package_revision=(value)
+    
+    @package_revision = value
+    
+    if value != nil
+
+      node = XML::Node.new('package-revision')
+      node.content = value.to_s
+      self.root << node
+
+    end
+    
+  end
+
+  def program_title=(value)
+
+    @program_title = value
+
+    if value != nil
+      
+      node = XML::Node.new('program-title')
+      node.content = value
+      self.root << node
+
+    end
+    
+  end
+
+  def program_description=(value)
+    
+    @program_description = value
+    
+    if value != nil
+      
+      node = XML::Node.new('program-description')
+      node.content = value
+      self.root << node
+
+    end
+        
+  end
+  
+  def uuid=(value)
+    
+    @uuid = value
+    
+    if value != nil
+      
+      node = XML::Node.new('uuid')
+      node.content = value
+      self.root << node
+      
+    end
+    
+  end
+
+  def runtime_dependency=(value)
+
+    @runtime_dependency = value
+    
+    if value != nil
+      
+      # create parent
+      parent = find('//runtime-dependency', nil)
+
+      if parent == nil
+        
+        parent = XML::Node.new('runtime-dependency')
+        self.root << parent
+
+      end
+
+      # write array
+      value.each do |current|
+
+        node = XML::Node.new('filename')
+        node['uri-ref'] = current
+        parent << node
+
+      end
+      
+    end
+    
+  end
+
+  def build_dependency=(value)
+    
+    @build_dependency = value
+    
+    if value != nil
+      
+      # create parent
+      parent = find('//build-dependency', nil)
+
+      if parent == nil
+        
+        parent = XML::Node.new('build-dependency')
+        self.root << parent
+
+      end
+
+      # write array
+      value.each do |current|
+
+        node = XML::Node.new('filename')
+        node['uri-ref'] = current
+        parent << node
+
+      end
+
+    end
+    
+  end
+
+  def filename=(value)
+
+    @filename = value
+    
+  end
+    
+  def licence=(value)
+    
+    @licence = value
+    
+    if value != nil
+      
+      # create parent
+      parent = find('//licence', nil)
+      
+      if parent == nil
+        
+        parent = XML::Node.new('licence')
+        self.root << parent
+
+      end
+
+      # write 2d array
+      value.each do |current|
+
+        case current[0]
+        when :REDIAN_BUILD_MIT_LICENCE
+
+          node = XML::Node.new('mit')
+
+        when :REDIAN_BUILD_LGPL_LICENCE
+
+          node = XML::Node.new('lgpl')
+
+        when :REDIAN_BUILD_GFDL_LICENCE
+
+          node = XML::Node.new('gfdl')
+
+        when :REDIAN_BUILD_GPL_LICENCE
+
+          node = XML::Node.new('gpl')
+
+        when :REDIAN_BUILD_AGPL_LICENCE
+
+          node = XML::Node.new('agpl')
+
+        else
+
+          @@logger.warn("unknown copyleft licence #{current[0].to_s}")
+          
+        end
+
+        
+        node['version'] = current[1]
+        parent << node
+
+      end
+
+    end
+    
+  end
+
+  def installed_documentation=(value)
+
+    @installed_documentation = value
+    
+    if value != nil
+      
+      # create parent
+      parent = find('//installed-documentation', nil)
+
+      if parent == nil
+        
+        parent = XML::Node.new('installed-documentation')
+        self.root << parent
+
+      end
+
+      # write array
+      value.each do |current|
+
+        node = XML::Node.new('filename')
+        node['uri-ref'] = current
+        parent << node
+
+      end
+
+    end
+    
+  end
+  
+  def installed_file=(value)
+
+    @installed_file
+    
+    if value != nil
+      
+      # create parent
+      parent = find('//installed-file', nil)
+
+      if parent == nil
+        
+        parent = XML::Node.new('installed-file')
+        self.root << parent
+
+      end
+
+      # write array
+      value.each do |current|
+
+        node = XML::Node.new('filename')
+        node['uri-ref'] = current
+        
+        parent << node
+        
+      end
+
+    end
+    
+  end
+  
+  def binary_tarball=(value)
+
+    @binary_tarball = value
+    
+    if value != nil
+      
+      node = XML::Node.new('binary-tarball')
+      node.content = value
+      self.root << node
+
+    end
+    
+  end
+  
   # find a package by matching attribute value
   def self.find(attribute, str)
 
@@ -115,7 +397,9 @@ class Redian::BuildPackage < LibXML::XML::Document
   # parse XML file containing package information
   def self.parse_file(filename)
 
-    doc = XML::Document.file(filename)
+    doc = Redian::BuildPackage::file(filename)
+    
+    # cast self
     retval = nil
     
     if doc.root.name == "package"
@@ -124,7 +408,6 @@ class Redian::BuildPackage < LibXML::XML::Document
       when "1.0"
         
         retval = Redian::BuildPackage.new(:uuid => doc.root.attributes.getAttribute("uuid"))
-        retval.xml_doc = doc
         
         # parse document
         doc.root.each_element do |current_node|
@@ -312,7 +595,7 @@ class Redian::BuildPackage < LibXML::XML::Document
       if filename.end_with?(".xml") == true
 
         # push to manager array
-        @@manager.push(Redian::BuildPackage.parse_file(filename))
+        @@manager.push(Redian::BuildPackage.parse_file("#{dirname}/#{filename}"))
         
       end
       
