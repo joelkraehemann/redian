@@ -35,11 +35,14 @@ class Redian::BuildServer < Object
 
   DEFAULT_WARRANTY = "#{Dir.pwd}/gpl-preamble.txt"
   DEFAULT_COPYLEFT = "#{Dir.pwd}/gpl.txt"
+
+  DEFAULT_SHELL = "/bin/bash"
   
   attr_accessor :build_cycle, :show_menu,
                 :build_package
-                
 
+
+  # default constructor
   def initialize(show_menu = true)
 
     @show_menu = show_menu
@@ -51,6 +54,7 @@ class Redian::BuildServer < Object
     
   end
 
+  # show menu
   def do_show_menu
     
     case @build_cycle
@@ -80,7 +84,7 @@ class Redian::BuildServer < Object
         prompt = TTY::Prompt.new
         
         # leave session
-        confirm_quit = prompt.no?("do you really want to quit? (y/N)")
+        confirm_quit = prompt.no?("do you really want to quit? (y/N) ")
         
         if confirm_quit == true
           
@@ -97,7 +101,7 @@ class Redian::BuildServer < Object
       prompt = TTY::Prompt.new
       
       # confirm UP
-      confirm_up = prompt.yes?("leave warranty? (Y/n)")
+      confirm_up = prompt.yes?("leave warranty? (Y/n) ")
 
       if confirm_up == true
         
@@ -112,7 +116,7 @@ class Redian::BuildServer < Object
       prompt = TTY::Prompt.new
 
       # confirm UP
-      confirm_up = prompt.yes?("leave copyleft? (Y/n)")
+      confirm_up = prompt.yes?("leave copyleft? (Y/n) ")
       
       if confirm_up == true
         
@@ -168,7 +172,8 @@ class Redian::BuildServer < Object
         end
         
       end
-      
+
+      # set build package
       if package != nil
 
         @build_package = package
@@ -194,30 +199,187 @@ class Redian::BuildServer < Object
       # ask package name
       prompt = TTY::Prompt.new
 
-      package_name = prompt.ask("New package name?")
+      package_name = prompt.ask("New package name? ")
       package_name.chomp!
       
       # ask package version
       prompt = TTY::Prompt.new
 
-      package_version = prompt.ask("New package version?")
+      package_version = prompt.ask("New package version? ")
       package_version.chomp!
       
       if (package_name != nil &&
           package_version != nil)
 
         @build_package = Redian::BuildPackage.new(SecureRandom.uuid(), package_name, package_version)
+
+        @build_cycle = :EDIT_BUILD
+        
+      else
+
+        @build_cycle = :SHOW_BUILD_COMMAND
         
       end
-      
-      # TODO:JK: implement me
-      @build_cycle = :SHOW_BUILD_COMMAND
 
     when :EDIT_BUILD
 
-      # TODO:JK: implement me
-      @build_cycle = :SHOW_BUILD_COMMAND
+      do_edit_build = true
+
+      while do_edit_build == true
+
+        # show build package fields
+        prompt = TTY::Prompt.new
+
+        package_field = prompt.select("Edit package field with uuid='#{@build_package.uuid}'") do |menu|
+
+          # package name
+          tmp = sprintf("name:\t\t\t%s", @build_package.package_name)
+          menu.choice tmp, Redian::BuildPackage::package_name
+
+          # package version
+          tmp = sprintf("version:\t\t\t%s", @build_package.package_version)
+          menu.choice tmp, Redian::BuildPackage::package_version
+
+          # package revision
+          tmp = sprintf("revision:\t\t\t%d", @build_package.package_revision)
+          menu.choice tmp, Redian::BuildPackage::
+
+          # program title
+          tmp = sprintf("title:\t\t\t%s", @build_package.program_title)
+          menu.choice tmp, Redian::BuildPackage::program_title
+
+          # program description
+          tmp = sprintf("description:\n%s", @build_package.program_description)
+          menu.choice tmp, Redian::BuildPackage::program_description
+
+          # runtime dependency
+          tmp = "runtime dependency:\n"
+          tmp += "#{@build_package.program_description}"
+          
+          menu.choice tmp, Redian::BuildPackage::runtime_dependency
+
+          # build dependency
+          tmp = "build dependency:\n"
+
+          @build_package.build_dependency.each do |current|
+
+            tmp += "#{current}\n"
+            
+          end
+          
+          menu.choice tmp, Redian::BuildPackage::build_dependency
+
+          # licence
+          tmp = "licences:\n"
+
+          @build_package.licence.each do |current|
+            
+            tmp += "#{current[0].to_s} Version #{current[1]}\n"
+            
+          end
+          
+          menu.choice tmp, Redian::BuildPackage::licence
+
+          # build dependency
+          tmp = "documentation:\n"
+
+          @build_package.installed_documentation.each do |current|
+
+            tmp += "#{current}\n"
+            
+          end
+          
+          menu.choice tmp, Redian::BuildPackage::installed_documentation
+
+          # build dependency
+          tmp = "files:\n"
+
+          @build_package.installed_file.each do |current|
+
+            tmp += "#{current}\n"
+            
+          end
+          
+          menu.choice tmp, Redian::BuildPackage::installed_file
+
+          menu.choice "Cancel", nil
+
+        end
+
+
+        case package_field
+        when Redian::BuildPackage::package_name
+
+          prompt = TTY::Prompt.new
+          value = prompt.ask("new name? ")
+
+          @build_package.package_name = value
+          
+        when Redian::BuildPackage::package_version
+
+          prompt = TTY::Prompt.new
+          value = prompt.ask("new version? ")
+
+          @build_package.package_version = value
+          
+        when Redian::BuildPackage::package_revision
+
+          prompt = TTY::Prompt.new
+          value = prompt.ask("new revision? ")
+
+          @build_package.package_revision = value.to_i
+          
+        when Redian::BuildPackage::program_title
+
+          prompt = TTY::Prompt.new
+          value = prompt.ask("new revision? ")
+
+          @build_package.program_title = value
+          
+        when Redian::BuildPackage::program_description
+
+          prompt = TTY::Prompt.new
+          value = prompt.multiline("new description?\n")
+
+          @build_package.program_description = value.split(/\n/)
+          
+        when Redian::BuildPackage::runtime_dependency
+
+          prompt = TTY::Prompt.new
+          value = prompt.multiline("new runtime dependency?\n")
+
+          @build_package.runtime_dependency = value.split(/\n/)
+          
+        when Redian::BuildPackage::build_dependency
+
+          prompt = TTY::Prompt.new
+          value = prompt.multiline("new build dependency?\n")
+
+          @build_package.build_dependency = value.split(/\n/)
+          
+        when Redian::BuildPackage::installed_documentation
+
+          prompt = TTY::Prompt.new
+          value = prompt.multiline("new installed documentation?\n")
+
+          @build_package.installed_documentation = value.split(/\n/)
+          
+        when Redian::BuildPackage::installed_file
+
+          prompt = TTY::Prompt.new
+          value = prompt.multiline("new installed file?\n")
+
+          @build_package.installed_file = value.split(/\n/)
+          
+        else
+          
+          do_edit_build = false
+          
+        end
+        
+      end
       
+      @build_cycle = :SHOW_BUILD_COMMAND
       
     when :PTY_SESSION
 
@@ -233,9 +395,13 @@ class Redian::BuildServer < Object
 
       prompt = TTY::Prompt.new
       
-      prompt.yes?("didn't understand input. Continue.")
+      prompt.yes?("didn't understand input. Continue. ")
+
+      @build_cycle = :SHOW_BUILD_COMMAND
       
     end
+
+    true
     
   end
 
