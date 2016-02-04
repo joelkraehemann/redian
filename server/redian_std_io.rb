@@ -8,12 +8,14 @@ require "event_aggregator"
 
 class Redian::StdIO < IO
 
-  attr_accessor :non_blocking
+  attr_accessor :filename, :non_blocking
   
   def initialize(filename, mode, non_blocking = false)
 
-    super()
-
+    super(IO.sysopen(filename, mode))
+    
+    self.filename = filename 
+    
     @non_blocking = non_blocking
     
   end
