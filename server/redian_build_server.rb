@@ -223,7 +223,15 @@ class Redian::BuildServer < Object
 
     when :EDIT_BUILD
 
-      do_edit_build = true
+      if @build_package != nil
+
+        do_edit_build = true
+        
+      else
+
+        do_edit_build = false
+        
+      end
 
       while do_edit_build == true
 
@@ -234,73 +242,89 @@ class Redian::BuildServer < Object
 
           # package name
           tmp = sprintf("name:\t\t\t%s", @build_package.package_name)
-          menu.choice tmp, Redian::BuildPackage::package_name
+          menu.choice tmp, :package_name
 
           # package version
           tmp = sprintf("version:\t\t\t%s", @build_package.package_version)
-          menu.choice tmp, Redian::BuildPackage::package_version
+          menu.choice tmp, :package_version
 
           # package revision
           tmp = sprintf("revision:\t\t\t%d", @build_package.package_revision)
-          menu.choice tmp, Redian::BuildPackage::
+          menu.choice tmp, :package_revision
 
           # program title
           tmp = sprintf("title:\t\t\t%s", @build_package.program_title)
-          menu.choice tmp, Redian::BuildPackage::program_title
+          menu.choice tmp, :program_title
 
           # program description
           tmp = sprintf("description:\n%s", @build_package.program_description)
-          menu.choice tmp, Redian::BuildPackage::program_description
+          menu.choice tmp, :program_description
 
           # runtime dependency
           tmp = "runtime dependency:\n"
           tmp += "#{@build_package.program_description}"
           
-          menu.choice tmp, Redian::BuildPackage::runtime_dependency
+          menu.choice tmp, :runtime_dependency
 
           # build dependency
           tmp = "build dependency:\n"
 
-          @build_package.build_dependency.each do |current|
+          if @build_package.build_dependency != nil
+            
+            @build_package.build_dependency.each do |current|
 
-            tmp += "#{current}\n"
+              tmp += "#{current}\n"
+            
+            end
             
           end
           
-          menu.choice tmp, Redian::BuildPackage::build_dependency
+          menu.choice tmp, :build_dependency
 
           # licence
           tmp = "licences:\n"
 
-          @build_package.licence.each do |current|
+          if @build_package.licence != nil
             
-            tmp += "#{current[0].to_s} Version #{current[1]}\n"
-            
+            @build_package.licence.each do |current|
+              
+              tmp += "#{current[0].to_s} Version #{current[1]}\n"
+              
+            end
+
           end
           
-          menu.choice tmp, Redian::BuildPackage::licence
+          menu.choice tmp, :licence
 
           # build dependency
           tmp = "documentation:\n"
 
-          @build_package.installed_documentation.each do |current|
-
-            tmp += "#{current}\n"
+          if @build_package.installed_documentation != nil
             
+            @build_package.installed_documentation.each do |current|
+
+              tmp += "#{current}\n"
+            
+            end
+
           end
           
-          menu.choice tmp, Redian::BuildPackage::installed_documentation
+          menu.choice tmp, :installed_documentation
 
           # build dependency
           tmp = "files:\n"
 
-          @build_package.installed_file.each do |current|
-
-            tmp += "#{current}\n"
+          if @build_package.installed_file != nil
             
+            @build_package.installed_file.each do |current|
+
+              tmp += "#{current}\n"
+              
+            end
+
           end
           
-          menu.choice tmp, Redian::BuildPackage::installed_file
+          menu.choice tmp, :installed_file
 
           menu.choice "Cancel", nil
 
@@ -308,63 +332,63 @@ class Redian::BuildServer < Object
 
 
         case package_field
-        when Redian::BuildPackage::package_name
+        when :package_name
 
           prompt = TTY::Prompt.new
           value = prompt.ask("new name? ")
 
           @build_package.package_name = value
           
-        when Redian::BuildPackage::package_version
+        when :package_version
 
           prompt = TTY::Prompt.new
           value = prompt.ask("new version? ")
 
           @build_package.package_version = value
           
-        when Redian::BuildPackage::package_revision
+        when :package_revision
 
           prompt = TTY::Prompt.new
           value = prompt.ask("new revision? ")
 
           @build_package.package_revision = value.to_i
           
-        when Redian::BuildPackage::program_title
+        when :program_title
 
           prompt = TTY::Prompt.new
-          value = prompt.ask("new revision? ")
+          value = prompt.ask("new program title? ")
 
           @build_package.program_title = value
           
-        when Redian::BuildPackage::program_description
+        when :program_description
 
           prompt = TTY::Prompt.new
           value = prompt.multiline("new description?\n")
 
           @build_package.program_description = value.split(/\n/)
           
-        when Redian::BuildPackage::runtime_dependency
+        when :runtime_dependency
 
           prompt = TTY::Prompt.new
           value = prompt.multiline("new runtime dependency?\n")
 
           @build_package.runtime_dependency = value.split(/\n/)
           
-        when Redian::BuildPackage::build_dependency
+        when :build_dependency
 
           prompt = TTY::Prompt.new
           value = prompt.multiline("new build dependency?\n")
 
           @build_package.build_dependency = value.split(/\n/)
           
-        when Redian::BuildPackage::installed_documentation
+        when :installed_documentation
 
           prompt = TTY::Prompt.new
           value = prompt.multiline("new installed documentation?\n")
 
           @build_package.installed_documentation = value.split(/\n/)
           
-        when Redian::BuildPackage::installed_file
+        when :installed_file
 
           prompt = TTY::Prompt.new
           value = prompt.multiline("new installed file?\n")

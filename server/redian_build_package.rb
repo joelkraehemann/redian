@@ -27,7 +27,7 @@ require_relative 'redian_build_licence'
 require 'libxml'
 require 'logger'
 
-class Redian::BuildPackage < LibXML::XML::Document
+class Redian::BuildPackage < Object
 
   include LibXML
   include Redian::BuildLicence
@@ -40,14 +40,14 @@ class Redian::BuildPackage < LibXML::XML::Document
 
   @@manager
   
-  attr_accessor :uuid,
+  attr_accessor :filename, :uuid,
                 :package_name, :package_version,
                 :package_revision, :program_title,
                 :program_description, 
                 :runtime_dependency, :build_dependency,
-                :filename, :licence,
+                :licence,
                 :installed_documentation, :installed_file,
-                :binary_tarball
+                :binary_tarball, :xml_doc
 
   class << self
 
@@ -55,12 +55,26 @@ class Redian::BuildPackage < LibXML::XML::Document
     
   end
   
-  def initialize(uuid, package_name = nil, package_version = nil, package_revision = 1, program_title = nil, program_description = nil, runtime_dependency = nil, build_dependency = nil, licence = nil)
+  def initialize(uuid, package_name = nil, package_version = nil, package_revision = 1, program_title = nil, program_description = nil, runtime_dependency = nil, build_dependency = nil, licence = nil, xml_doc = nil)
 
     super()
 
-    self.root = XML::Node.new('package')
-    self.root['version'] = "1.0"
+    self.filename = "#{DEFAULT_BUILD_PACKAGE_DIRECTORY}/#{package_name}-#{package_version}-#{package_revision}.xml"
+    
+    # save XML
+    if xml_doc == nil
+       
+       self.xml_doc = LibXML::XML::Document.new
+       @xml_doc.root = XML::Node.new('package')
+       @xml_doc.root['version'] = "1.0"
+
+       @xml_doc.save(@filename, :indent => true, :encoding => LibXML::XML::Encoding::UTF_8)
+
+    else
+
+      @xml_doc = xml_doc
+      
+    end
 
     self.package_name = package_name
     self.package_version = package_version
@@ -74,16 +88,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     self.runtime_dependency = runtime_dependency
     self.build_dependency = build_dependency
 
-    self.filename = "#{DEFAULT_BUILD_PACKAGE_DIRECTORY}/#{@package_name}-#{@package_version}-#{@package_revision}.xml"
     self.licence = licence
     
     self.installed_documentation = Array.new
     self.installed_file = Array.new
 
     self.binary_tarball = nil
-
-    # save XML
-    save(@filename, :indent => true, :encoding => LibXML::XML::Encoding::UTF_8)
 
     # add to manager
     @@manager.push(self)
@@ -96,16 +106,28 @@ class Redian::BuildPackage < LibXML::XML::Document
     
   end
 
+  def package_name
+
+    @package_name
+    
+  end
+  
   def package_name=(value)
 
     @package_name = value
     
     node = XML::Node.new('package-name')
     node.content = value
-    self.root << node
+    @xml_doc.root << node
     
   end
 
+  def package_version
+
+    @package_version
+
+  end
+  
   def package_version=(value)
 
     @package_version = value
@@ -114,7 +136,7 @@ class Redian::BuildPackage < LibXML::XML::Document
 
       node = XML::Node.new('package-version')
       node.content = value
-      self.root << node
+      @xml_doc.root << node
 
     end
         
@@ -128,7 +150,7 @@ class Redian::BuildPackage < LibXML::XML::Document
 
       node = XML::Node.new('package-revision')
       node.content = value.to_s
-      self.root << node
+      @xml_doc.root << node
 
     end
     
@@ -142,7 +164,7 @@ class Redian::BuildPackage < LibXML::XML::Document
       
       node = XML::Node.new('program-title')
       node.content = value
-      self.root << node
+      @xml_doc.root << node
 
     end
     
@@ -156,7 +178,7 @@ class Redian::BuildPackage < LibXML::XML::Document
       
       node = XML::Node.new('program-description')
       node.content = value
-      self.root << node
+      @xml_doc.root << node
 
     end
         
@@ -170,7 +192,7 @@ class Redian::BuildPackage < LibXML::XML::Document
       
       node = XML::Node.new('uuid')
       node.content = value
-      self.root << node
+      @xml_doc.root << node
       
     end
     
@@ -183,12 +205,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     if value != nil
       
       # create parent
-      parent = find('//runtime-dependency', nil)
+      parent = @xml_doc.find('//runtime-dependency', nil)
 
       if parent == nil
         
         parent = XML::Node.new('runtime-dependency')
-        self.root << parent
+        @xml_doc.root << parent
 
       end
 
@@ -212,12 +234,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     if value != nil
       
       # create parent
-      parent = find('//build-dependency', nil)
+      parent = @xml_doc.find('//build-dependency', nil)
 
       if parent == nil
         
         parent = XML::Node.new('build-dependency')
-        self.root << parent
+        @xml_doc.root << parent
 
       end
 
@@ -247,12 +269,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     if value != nil
       
       # create parent
-      parent = find('//licence', nil)
+      parent = @xml_doc.find('//licence', nil)
       
       if parent == nil
         
         parent = XML::Node.new('licence')
-        self.root << parent
+        @xml_doc.root << parent
 
       end
 
@@ -303,12 +325,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     if value != nil
       
       # create parent
-      parent = find('//installed-documentation', nil)
+      parent = @xml_doc.find('//installed-documentation', nil)
 
       if parent == nil
         
         parent = XML::Node.new('installed-documentation')
-        self.root << parent
+        @xml_doc.root << parent
 
       end
 
@@ -332,12 +354,12 @@ class Redian::BuildPackage < LibXML::XML::Document
     if value != nil
       
       # create parent
-      parent = find('//installed-file', nil)
+      parent = @xml_doc.find('//installed-file', nil)
 
       if parent == nil
         
         parent = XML::Node.new('installed-file')
-        self.root << parent
+        @xml_doc.root << parent
 
       end
 
@@ -363,7 +385,7 @@ class Redian::BuildPackage < LibXML::XML::Document
       
       node = XML::Node.new('binary-tarball')
       node.content = value
-      self.root << node
+      @xml_doc.root << node
 
     end
     
@@ -373,23 +395,28 @@ class Redian::BuildPackage < LibXML::XML::Document
   def self.find(attribute, str)
 
     retval = nil
-    
-    @@manager.each do |current|
 
-      if current.send(attribute) == str
+    if(attribute != nil &&
+       str != nil)
+      
+      @@manager.each do |current|
 
-        if retval == nil
+        if current.instance_variable_get("@#{attribute}") == str
 
-          retval = Array.new
+          if retval == nil
+
+            retval = Array.new
+            
+          end
+
+          retval.push(current)
           
         end
-
-        retval.push(current)
         
       end
-      
-    end
 
+    end
+    
     retval
     
   end
@@ -397,20 +424,20 @@ class Redian::BuildPackage < LibXML::XML::Document
   # parse XML file containing package information
   def self.parse_file(filename)
 
-    doc = Redian::BuildPackage::file(filename)
+    xml_doc = LibXML::XML::Document::file(filename)
     
-    # cast self
+    # initialize return value
     retval = nil
     
-    if doc.root.name == "package"
+    if xml_doc.root.name == "package"
 
-      case doc.root.attributes.getAttribute("version")
+      case xml_doc.root.attributes.get_attribute("version")
       when "1.0"
         
-        retval = Redian::BuildPackage.new(:uuid => doc.root.attributes.getAttribute("uuid"))
+        retval = Redian::BuildPackage.new(:uuid => xml_doc.root.attributes.get_attribute("uuid"), :xml_doc => xml_doc)
         
         # parse document
-        doc.root.each_element do |current_node|
+        xml_doc.root.each_element do |current_node|
 
           if current_node.type == ELEMENT_NODE
             
@@ -449,7 +476,7 @@ class Redian::BuildPackage < LibXML::XML::Document
                 if(filename_node.type == ELEMENT_NODE &&
                    filename_node.name == "filename")
 
-                  retval.runtime_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
+                  retval.runtime_dependency.push(filename_node.attributes.get_attribute("uri-ref"))
 
                 end
                 
@@ -464,7 +491,7 @@ class Redian::BuildPackage < LibXML::XML::Document
                 if(filename_node.type == ELEMENT_NODE &&
                    filename_node.name == "filename")
                   
-                  retval.build_dependency.push(filename_node.attributes.getAttribute("uri-ref"))
+                  retval.build_dependency.push(filename_node.attributes.get_attribute("uri-ref"))
 
                 end
                 
@@ -488,27 +515,27 @@ class Redian::BuildPackage < LibXML::XML::Document
                     when "mit"
 
                       # MIT licence
-                      retval.licence.push([:REDIAN_BUILD_MIT_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      retval.licence.push([:REDIAN_BUILD_MIT_LICENCE, copyleft_node.attributes.get_attribute("version")])
                       
                     when "lgpl"
 
                       # LGPL licence
-                      retval.licence.push([:REDIAN_BUILD_LGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      retval.licence.push([:REDIAN_BUILD_LGPL_LICENCE, copyleft_node.attributes.get_attribute("version")])
                       
                     when "gfdl"
 
                       # GFDL licence
-                      retval.licence.push([:REDIAN_BUILD_GFDL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      retval.licence.push([:REDIAN_BUILD_GFDL_LICENCE, copyleft_node.attributes.get_attribute("version")])
                       
                     when "gpl"
                       
                       # GPL licence
-                      retval.licence.push([:REDIAN_BUILD_GPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      retval.licence.push([:REDIAN_BUILD_GPL_LICENCE, copyleft_node.attributes.get_attribute("version")])
                       
                     when "agpl"
 
                       # AGPL licence
-                      retval.licence.push([:REDIAN_BUILD_AGPL_LICENCE, copyleft_node.attributes.getAttribute("version")])
+                      retval.licence.push([:REDIAN_BUILD_AGPL_LICENCE, copyleft_node.attributes.get_attribute("version")])
                       
                     else
                       
@@ -529,7 +556,7 @@ class Redian::BuildPackage < LibXML::XML::Document
                  if(filename_node.type == ELEMENT_NODE &&
                     filename_node.name == "filename")
                    
-                   retval.installed_documentation.push(filename_node.attributes.getAttribute("uri-ref"))
+                   retval.installed_documentation.push(filename_node.attributes.get_attribute("uri-ref"))
                    
                  end
                  
@@ -544,7 +571,7 @@ class Redian::BuildPackage < LibXML::XML::Document
                  if(filename_node.type == ELEMENT_NODE &&
                     filename_node.name == "filename")
                    
-                   retval.installed_file.push(filename_node.attributes.getAttribute("uri-ref"))
+                   retval.installed_file.push(filename_node.attributes.get_attribute("uri-ref"))
 
                  end
                  
@@ -568,14 +595,14 @@ class Redian::BuildPackage < LibXML::XML::Document
       else
 
         # unknown version
-        @@logger.warn("unknown package version #{doc.root.attributes.getAttribute('version')}")
+        @@logger.warn("unknown package version #{xml_doc.root.attributes.get_attribute('version')}")
         
       end
       
     else
 
       # unsupported root node
-      @@logger.warn("unsupported root node #{doc.root.name}")
+      @@logger.warn("unsupported root node #{xml_doc.root.name}")
       
     end
 
